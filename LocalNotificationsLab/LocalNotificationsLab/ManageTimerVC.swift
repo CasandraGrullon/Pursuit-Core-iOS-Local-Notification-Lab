@@ -23,18 +23,38 @@ class ManageTimerVC: UIViewController {
     
     private let pendingNotifications = PendingNotifications()
     
+    private var refreshControl: UIRefreshControl!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
         checkForAuthorization()
         loadTimers()
+        configureRefreshControl()
         notificationCenter.delegate = self
         
     }
+    private func configureRefreshControl() {
+        refreshControl = UIRefreshControl()
+        refreshControl.tintColor = .systemPink
+        tableView.refreshControl = refreshControl
+        refreshControl.addTarget(self, action: #selector(loadTimers), for: .valueChanged)
+    }
     
-    private func loadTimers() {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        guard let navController = segue.destination as? UINavigationController,
+            let setTimerVC = navController.viewControllers.first as? SetTimerVC else {
+            fatalError("could not downcast to CreateNotificationViewController")
+        }
+        setTimerVC.delegate = self
+    }
+    
+    @objc private func loadTimers() {
         pendingNotifications.getPendingNotifications { (requests) in
             self.timers = requests
+            DispatchQueue.main.async {
+                self.refreshControl.endRefreshing()
+            }
         }
     }
     
@@ -93,4 +113,11 @@ extension ManageTimerVC: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler(.alert)
     }
+}
+extension ManageTimerVC: CreateTimerDelegate {
+    func didCreateTimer(_ setTimerVC: SetTimerVC) {
+        loadTimers()
+    }
+    
+    
 }

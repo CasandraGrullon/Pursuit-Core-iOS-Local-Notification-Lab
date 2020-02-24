@@ -17,9 +17,9 @@ class SetTimerVC: UIViewController {
     @IBOutlet weak var timerTitle: UITextField!
     @IBOutlet weak var datePicker: UIDatePicker!
     
-    private var timeInterval: TimeInterval = Date().timeIntervalSinceNow + 5
     weak var delegate: CreateTimerDelegate?
     
+    private var timeInterval: TimeInterval = Date().timeIntervalSinceNow + 5
     private lazy var tapGesture: UITapGestureRecognizer = {
         let gesture = UITapGestureRecognizer()
         gesture.addTarget(self, action: #selector(tapGesture(sender:)))
@@ -36,6 +36,7 @@ class SetTimerVC: UIViewController {
         let content = UNMutableNotificationContent()
         content.title = timerTitle.text ?? "no title"
         content.subtitle = datePicker.countDownDuration.description
+        content.sound = .default
         let identifier = UUID().uuidString
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
@@ -57,6 +58,7 @@ class SetTimerVC: UIViewController {
     }
 
     @IBAction func datePickerAction(_ sender: UIDatePicker) {
+        configureDatePicker()
         guard sender.date > Date() else {return}
         timeInterval = sender.date.timeIntervalSinceNow + 5
     }
@@ -64,6 +66,7 @@ class SetTimerVC: UIViewController {
     @IBAction func buttonPressed(_ sender: UIButton) {
         createTimer()
         delegate?.didCreateTimer(self)
+        dismiss(animated: true, completion: nil)
     }
     
 }
